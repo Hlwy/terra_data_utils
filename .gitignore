@@ -1,3 +1,13 @@
+# Custom Ignores
+experiments
+experiments/
+experiments/*
+
+collections
+collections/
+collections/*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
