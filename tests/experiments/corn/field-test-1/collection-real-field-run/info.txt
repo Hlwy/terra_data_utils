@@ -1,0 +1,5 @@
+FIELD EnergyFarm
+PLOT 6D
+ROW 2
+CROP unknown
+OPERATOR unknown
