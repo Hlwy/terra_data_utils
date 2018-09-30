@@ -343,7 +343,7 @@ if __name__ == '__main__':
 	myFolder = os.path.dirname(myPath)
 	myParentDir = os.path.dirname(myFolder)
 	# Change to repo root directory for easier calling of various paths
-	log_dir = os.path.join(myParentDir,"tests/datalogs")
+	log_dir = os.path.join(myParentDir,"test_data/datalogs")
 
 	""" -------	TESTS FOR FINDING DIFFERENT DATA LOGS ------- """
 	if(TEST_SEARCHING):

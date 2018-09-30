@@ -192,7 +192,7 @@ if __name__ == '__main__':
 	myFolder = os.path.dirname(myPath)
 	myParentDir = os.path.dirname(myFolder)
 	# Change to repo root directory for easier calling of various paths
-	collection_dir = os.path.join(myParentDir,"tests/collections")
+	collection_dir = os.path.join(myParentDir,"test_data/collections")
 
 	""" -------	SEARCHING OF COLLECTIONS ------- """
 	if TEST_SEARCHING:

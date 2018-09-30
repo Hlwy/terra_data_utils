@@ -105,11 +105,11 @@ if __name__ == '__main__':
 	# Change to repo root directory for easier calling of various paths
 	os.chdir(myParentDir)
 
-	""" Test importing different datalog types from the 'tests' directory """
+	""" Test importing different datalog types from the 'test_data' directory """
 
 	# System data
 	print("\nTesting importing a \'system_log\'...")
-	logData = read_datalog("tests/datalogs/datalog/system_log")
+	logData = read_datalog("test_data/datalogs/datalog/system_log")
 	sz = logData.shape
 	print("\n\t [YAY!!] Successfully imported recorded system data [%d X %d]!" % (sz[0], sz[1]) )
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
 	# Camera
 	print("\nTesting importing \'camera_test.txt\'...")
-	logData = read_datalog("tests/datalogs/camera/camera_test.txt")
+	logData = read_datalog("test_data/datalogs/camera/camera_test.txt")
 	sz = logData.shape
 	print("\n\t [YAY!!] Successfully imported recorded camera log [%d X %d]!" % (sz[0], sz[1]) )
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
 	# Raw Lidar Data
 	print("\nTesting importing raw Lidar data \'lidar/lidar_log\'...")
-	logData = read_datalog("tests/datalogs/lidar/lidar_log", has_header = False, skip_n = 0)
+	logData = read_datalog("test_data/datalogs/lidar/lidar_log", has_header = False, skip_n = 0)
 	sz = logData.shape
 	print("\n\t [YAY!!] Successfully imported raw Lidar data [%d X %d]!" % (sz[0], sz[1]) )
 
@@ -133,6 +133,6 @@ if __name__ == '__main__':
 
 	# Perception Lidar Data
 	print("\nTesting importing Perception Lidar data \'lidar/perception_lidar_log\'...")
-	logData, configData = read_perception_lidar_log("tests/datalogs/lidar/perception_lidar_log")
+	logData, configData = read_perception_lidar_log("test_data/datalogs/lidar/perception_lidar_log")
 	sz = logData.shape
 	print("\n\t [YAY!!] Successfully imported Perception Lidar data [%d X %d]!" % (sz[0], sz[1]) )
