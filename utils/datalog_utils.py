@@ -29,7 +29,7 @@ def find_system_logs(search_path, patterns=None, verbose=False):
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*datalog*.txt','*system_log']
+		patterns = ['*datalog-navigation*.txt','*system_log']
 
 	if(verbose):
 		print("\nSearching for system logs in data collection....")
@@ -121,7 +121,7 @@ def find_lidar_logs(search_path, patterns=None, specific_target=None,verbose=Fal
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*lidar_log']
+		patterns = ['*datalog-lidar*measurements.txt','*lidar_log']
 
 	if(verbose):
 		print("\nSearching for available Lidars recorded in data collection....")
@@ -171,7 +171,7 @@ def find_perception_lidar_logs(search_path, patterns=None,specific_target=None,v
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*perception_lidar_log']
+		patterns = ['*datalog-lidar*perception.txt','*perception_lidar_log']
 
 	if(verbose):
 		print("\nSearching for available Perception Lidar recorded in data collection....")
