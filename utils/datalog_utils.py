@@ -29,7 +29,7 @@ def find_system_logs(search_path, patterns=None, verbose=False):
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*datalog-navigation*.txt','*system_log']
+		patterns = ['*datalog*.txt','*system_log']
 
 	if(verbose):
 		print("\nSearching for system logs in data collection....")
@@ -121,7 +121,8 @@ def find_lidar_logs(search_path, patterns=None, specific_target=None,verbose=Fal
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*datalog-lidar*measurements.txt','*lidar_log']
+		# patterns = ['*datalog-lidar*measurements.txt','*lidar_log']
+		patterns = ['*lidar_log']
 
 	if(verbose):
 		print("\nSearching for available Lidars recorded in data collection....")
@@ -171,7 +172,8 @@ def find_perception_lidar_logs(search_path, patterns=None,specific_target=None,v
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*datalog-lidar*perception.txt','*perception_lidar_log']
+		# patterns = ['*datalog-lidar*perception.txt','*perception_lidar_log']
+		patterns = ['*perception_lidar_log']
 
 	if(verbose):
 		print("\nSearching for available Perception Lidar recorded in data collection....")
@@ -227,7 +229,7 @@ def get_system_data(path, verbose=False):
 		print("\t[INFO] parent directory ----- %s" % (str(path)))
 
 	# Find all available camera log directories
-	log_path, nLogs = find_system_logs(path,verbose=False)
+	log_path, nLogs = find_system_logs(path,verbose=verbose)
 	if(verbose): print("\t[INFO] Found %d system logs" % (nLogs) )
 
 	# Exiting Conditions

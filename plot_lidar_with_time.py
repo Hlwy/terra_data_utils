@@ -15,9 +15,9 @@ def main():
     exp_path = args["experiment"]
 
     collection_paths, nFound = find_collections(exp_path, verbose=True)
-
+    print collection_paths
     if nFound == 1:
-        sysData = get_system_data(collection_paths)
+        sysData = get_system_data(collection_paths, verbose=True)
         lData = get_raw_lidar_data(collection_paths)
         plData, plConfig = get_perception_lidar_data(collection_paths)
         xs, ys, bot_ys, centers, distsL,distsR = process_lidar_logs(lData, [plData, plConfig], sysData)

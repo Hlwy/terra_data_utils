@@ -67,7 +67,8 @@ def get_estimated_offset_from_reference(distances_left, distances_right, ref_off
 def get_avg_speed(encoders_left, encoders_right):
 	bot_spd = (encoders_left + encoders_right) / 2
 	avg_spd = np.nanmean(bot_spd)
-	return avg_spd*pow(10,-2)
+	return avg_spd*pow(10,-1.75) # Simulation
+	# return avg_spd*pow(10,-1.15) # Real
 
 def get_estimated_robot_position(avg_spd, times):
 	t0 = times[0]				# Initial System Time [ms] of datalog
