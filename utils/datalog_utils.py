@@ -277,7 +277,7 @@ def get_raw_lidar_data(path, target_lidar="lidar_log", verbose=False):
 		print("\t[WARNING] No Lidar log data could be found!")
 		output_data = None
 	elif(nLogs == 1):
-		tmp_data = read_datalog(log_path, has_header = False, skip_n = 0)
+		tmp_data = read_datalog(log_path, has_header = False, skip_n = 0,show=verbose)
 
 		""" NOTE: This portion is to handle previous datalogs that
 		were setup differently

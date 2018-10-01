@@ -6,16 +6,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Add to utils
-from utils import experiment_utils as eut
+# from utils import experiment_utils as eut
+from collection_utils import *
 
-def fcnProjectLidarScan(lidar_data, ang, lim_x_i, lim_x_s, lim_y_i, lim_y_s, theta):
-    x_f = []
-    y_f = []
-    x = [0]*len(lidar_data)
-    y = [0]*len(lidar_data)
+def fcnProjectLidarScan(lidar_scan, ang, lim_x_i, lim_x_s, lim_y_i, lim_y_s, theta):
+	x_f = []
+	y_f = []
+	x = [0]*len(lidar_scan)
+	y = [0]*len(lidar_scan)
 
 	# For each distance measurement in current 2D Lidar scan
-    for i in range(0, len(lidar_data)):
+	for i in range(0, len(lidar_scan)):
 
 		""" NOTE: 'terrasentia-gazebo' simulated Lidar measurements, which are
 		serialized and broadcasted over UDP ('terrasentia_bridge' package), are
@@ -31,8 +32,8 @@ def fcnProjectLidarScan(lidar_data, ang, lim_x_i, lim_x_s, lim_y_i, lim_y_s, the
 		readings.
 		"""
 		# Convert max/min simulated lidar measurments to respective values
-        if lidar_data[i] == -1000: lidar_data[i] = 65533 		# Max
-        if lidar_data[i] == -2000: lidar_data[i] = 0	 		# Min TODO: make sure value matches
+		if lidar_scan[i] == -1000: lidar_scan[i] = 65533 		# Max
+		if lidar_scan[i] == -2000: lidar_scan[i] = 0	 		# Min TODO: make sure value matches
 
 		""" NOTE: The following two lines do the following for each raw distance
 		measurement (lidar[i]) received from the Lidar's frame of reference:
@@ -45,40 +46,20 @@ def fcnProjectLidarScan(lidar_data, ang, lim_x_i, lim_x_s, lim_y_i, lim_y_s, the
 			was done by incorporating the robot's estimated heading (relative
 			from within the crop row) with the angle of associated with lidar[i]
 		"""
-		x=(lidar_data[i]*math.cos(ang[i]*math.pi/180 + theta))/1000;
-        y=(lidar_data[i]*math.sin(ang[i]*math.pi/180 + theta))/1000;
+		x=(lidar_scan[i]*math.cos(ang[i]*math.pi/180 + theta))/1000;
+		y=(lidar_scan[i]*math.sin(ang[i]*math.pi/180 + theta))/1000;
 
 		# Only use lidar measurements that are within a specified "bounding rectangle"
-        if x < lim_x_s and x> lim_x_i and y < lim_y_s and y > lim_y_i:
-            x_f.append(x);
-            y_f.append(y);
+		if x < lim_x_s and x> lim_x_i and y < lim_y_s and y > lim_y_i:
+			x_f.append(x);
+			y_f.append(y);
 
-    return x_f, y_f
-
-
-
-# perception_lidar_log variables
-p = pTS[exp]								# perception lidar log data
-pc = pTS_configs[exp]  						# perception_lidar_log config values
-lts = p.lidar_ts_ms							# lidar timestamp used by the perception
-ts = p.timestamp							# timestamp from perception_lidar_log
-dl = p.distance_left
-dr = p.distance_right
-heading = p.heading
-
-# lidar_log variables
-l_ts = list(lidar[exp])						# timestamp from lidar_log file
-
-# system_log variables
-d = datalog[exp]								# system_log data
-el = d.speed_calculation_from_encoder_left_m_s
-er = d.speed_calculation_from_encoder_right_m_s
+	return x_f, y_f
 
 
-def get_estimated_offset_from_reference(distances_left, distances_right, pl_config):
+def get_estimated_offset_from_reference(distances_left, distances_right, ref_offset):
 	""" Desired offset of the navigation reference line (usually is 0 meaning the
 	user wanted the robot to travel down the center of the row """
-	ref_offset =  pl_config['middle_ref_m']
 	# Estimate the robot's offset from its desired navigation line (e.g lane center)
 	estimated_center = 0.5 * (distances_right - distances_left) - ref_offset
 	return estimated_center
@@ -98,30 +79,57 @@ def get_estimated_robot_position(avg_spd, times):
 	return y_robot
 
 
-
-def process_lidar_logs(raw_lidar_times, lidar_data):
+def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 	""" NOTE:
 
 		- l_ts	: lidar_log times
 		- lts	: perception_lidar_log times
 		- pc	: perception_lidar_log configuration parameters
 	"""
-	raw_lidar_times = 
-	lidar_data =
+	# System log data
+	sysLog = system_data
+	encsL = sysLog['speed calculation from encoder left (m/s)']
+	encsR = sysLog['speed calculation from encoder right (m/s)']
 
+	# Raw Lidar data
+	lidarLog = raw_lidar_data
+	raw_lidar_times = list(lidarLog[0][:])
+
+	# print raw_lidar_times
+
+	print lidarLog[2][1:]
+	# Perception Lidar data
+	plLog = perception_lidar_data[0]
+	plConfig = perception_lidar_data[1]
+
+	plTimes = plLog['timestamp']
+	plLidTimes = plLog['lidar_ts_ms']
+
+	distsL = plLog['distance_left']
+	distsR = plLog['distance_right']
+	headings = plLog['heading']
+
+	ref_offset =  float(plConfig['middle_ref_m'])
+
+	# Calculate Intermediate Values
+	estimatedCenters = get_estimated_offset_from_reference(distsL, distsR, ref_offset)
+	avg_spd = get_avg_speed(encsL, encsR)
+	y_bot = get_estimated_robot_position(avg_spd, plTimes)
+
+	# Loop through perception lidar data
 	index0 = 1
 	x_raw=[]
 	y_raw=[]
 	# Loop through each recorded Lidar scan data
-	for pl_scan_idx in range (index0, len(estimated_center)):
+	for pl_scan_idx in range (index0, len(estimatedCenters)):
 
 		# Use the timestamp of the 'perception_lidar_log' as reference
-		t_ref = lts[pl_scan_idx]
+		t_ref = plLidTimes[pl_scan_idx]
+
 		in_sync = False
 		i = 0
 		# Ensure time of raw lidar data used syncs up with 'perception_lidar_log' information
 		while i < len(raw_lidar_times) - 1 and not in_sync:
-
 			# Exit if current raw scan time is after current reference time
 			if t_ref < raw_lidar_times[i]:
 				scan_idx = i
@@ -139,13 +147,16 @@ def process_lidar_logs(raw_lidar_times, lidar_data):
 		# Extract stored and synchronized timestamp value
 		t_sync = raw_lidar_times[scan_idx]
 		# Get lidar distance measurements from time-synchronized scan
-		scan_data = lidar_data[exp][t_sync]
+		print scan_idx
+		scan_data = lidarLog[t_sync]
+		print scan_data
 		# Generate angular range of Lidar distance measurements [degrees]
 		ang_rng = np.linspace(-45,225,1080, endpoint = False)
 		# Project time-sync'd raw lidar scan into corrected cartesian coordinates
-		xf, yf = fcnProjectLidarScan(scan_data, ang_rng, -pc['LANE_WIDTH'], ⁠\
-									pc['LANE_WIDTH'], pc['lim_y_i'], \
-									pc['lim_y_s'], p.heading[pl_scan_idx])
+		xf, yf = fcnProjectLidarScan(scan_data, ang_rng, (-1)*plConfig['LANE_WIDTH'], \
+									plConfig['LANE_WIDTH'], plConfig['lim_y_i'], \
+									plConfig['lim_y_s'], headings[pl_scan_idx])
+
 
 		# TODO: Figure out logic
 		E = 0.1
@@ -167,8 +178,8 @@ def process_lidar_logs(raw_lidar_times, lidar_data):
 				xf2.append(xf1[i])
 
 		# TODO: Figure out logic
-		xf2 = np.array(xf2) - pc['middle_ref_m']
-		yf2 = np.array(yf2) + avg_speed_m_s*(ts[scan] - ts[0])*pow(10,-3)
+		xf2 = np.array(xf2) - ref_offset
+		yf2 = np.array(yf2) + avg_spd*(plTimes[pl_scan_idx] - plTimes[0])*pow(10,-3)
 		if len(yf2) > 0:
 			aux_maxy = max(yf2)
 			if aux_maxy > maxy:
@@ -177,6 +188,9 @@ def process_lidar_logs(raw_lidar_times, lidar_data):
 		# Store cartesian coordinates for later visualization
 		x_raw = np.append(x_raw,xf2)
 		y_raw = np.append(y_raw,yf2)
+
+	# Return essential data
+	return x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR
 
 
 def plot_data():
@@ -193,3 +207,53 @@ def plot_data():
 	ax = plt.gca()
 	ax.set_aspect('equal', 'datalim')
 	plt.show()
+
+# ========================================================
+#				 	  MAIN SYSTEM CALL
+# ========================================================
+if __name__ == '__main__':
+
+	dLs = []	# System Datalogs
+	lLs = []	# Raw Lidar Datalogs
+	plLs = []	# Perception Lidar Datalogs
+	# plcLs = []	# Perception Lidar Configs
+
+	# Get the absolute path of this script regardless of where this script is called from
+	myPath = os.path.abspath(__file__)
+	myFolder = os.path.dirname(myPath)
+	myParentDir = os.path.dirname(myFolder)
+	# Change to repo root directory for easier calling of various paths
+	experiment_dir = os.path.join(myParentDir,"test_data/experiments")
+	collection_paths, nFound = find_collections(experiment_dir)
+
+	for path in collection_paths:
+		sysData = get_system_data(path)
+		lData = get_raw_lidar_data(path)
+		plData, plConfigs = get_perception_lidar_data(path)
+
+		dLs.append(sysData)
+		lLs.append(lData)
+		plLs.append([plData, plConfigs])
+		# plcLs.append(plConfigs)
+
+	# Do Stuff
+	# tmpData = lLs[1]
+	# print tmpData.shape
+	# print tmpData[0][:]
+
+	xs, ys, bot_ys, centers, distsL,distsR = process_lidar_logs(lLs[1], plLs[1], dLs[1])
+
+	print centers.shape
+
+	# plt.figure(1)
+	# #plot lateral rows
+	# plt.plot(ys, xs,'g*', marker='.', linestyle='None')
+	# #plot estimated position of the robot
+	# plt.plot(bot_ys,-centers[1:],'k',lw=2)
+	# #plot estimated left lateral distance
+	# plt.plot(bot_ys,distsL[1:],'r-',lw=2)
+	# #plot estimated right lateral distance
+	# plt.plot(bot_ys,-distsR[1:],'r-',lw=2)
+	# ax = plt.gca()
+	# ax.set_aspect('equal', 'datalim')
+	# plt.show()
