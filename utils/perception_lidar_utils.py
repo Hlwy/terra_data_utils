@@ -67,7 +67,7 @@ def get_estimated_offset_from_reference(distances_left, distances_right, ref_off
 def get_avg_speed(encoders_left, encoders_right):
 	bot_spd = (encoders_left + encoders_right) / 2
 	avg_spd = np.nanmean(bot_spd)
-	return avg_spd
+	return avg_spd*pow(10,-2)
 
 def get_estimated_robot_position(avg_spd, times):
 	t0 = times[0]				# Initial System Time [ms] of datalog
@@ -96,8 +96,8 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 	raw_lidar_times = list(lidarLog[0][:])
 
 	# print raw_lidar_times
+	# print lidarLog.iloc[2,1:].values
 
-	print lidarLog[2][1:]
 	# Perception Lidar data
 	plLog = perception_lidar_data[0]
 	plConfig = perception_lidar_data[1]
@@ -110,12 +110,15 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 	headings = plLog['heading']
 
 	ref_offset =  float(plConfig['middle_ref_m'])
+	LW = float(plConfig['LANE_WIDTH'])
+	limYs = float(plConfig['lim_y_s'])
+	limYi = float(plConfig['lim_y_i'])
 
 	# Calculate Intermediate Values
 	estimatedCenters = get_estimated_offset_from_reference(distsL, distsR, ref_offset)
 	avg_spd = get_avg_speed(encsL, encsR)
 	y_bot = get_estimated_robot_position(avg_spd, plTimes)
-
+	print avg_spd
 	# Loop through perception lidar data
 	index0 = 1
 	x_raw=[]
@@ -147,16 +150,16 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 		# Extract stored and synchronized timestamp value
 		t_sync = raw_lidar_times[scan_idx]
 		# Get lidar distance measurements from time-synchronized scan
-		print scan_idx
-		scan_data = lidarLog[t_sync]
-		print scan_data
+		# print scan_idx
+		scan_data = lidarLog.iloc[scan_idx,1:].values
+		# print scan_data
 		# Generate angular range of Lidar distance measurements [degrees]
 		ang_rng = np.linspace(-45,225,1080, endpoint = False)
 		# Project time-sync'd raw lidar scan into corrected cartesian coordinates
-		xf, yf = fcnProjectLidarScan(scan_data, ang_rng, (-1)*plConfig['LANE_WIDTH'], \
-									plConfig['LANE_WIDTH'], plConfig['lim_y_i'], \
-									plConfig['lim_y_s'], headings[pl_scan_idx])
+		xf, yf = fcnProjectLidarScan(scan_data, ang_rng, -LW, LW, limYi, limYs, float(headings[pl_scan_idx]))
 
+		# Check Sizes
+		# print len(scan_data)
 
 		# TODO: Figure out logic
 		E = 0.1
@@ -243,17 +246,17 @@ if __name__ == '__main__':
 
 	xs, ys, bot_ys, centers, distsL,distsR = process_lidar_logs(lLs[1], plLs[1], dLs[1])
 
-	print centers.shape
+	print xs.shape
 
-	# plt.figure(1)
-	# #plot lateral rows
-	# plt.plot(ys, xs,'g*', marker='.', linestyle='None')
-	# #plot estimated position of the robot
-	# plt.plot(bot_ys,-centers[1:],'k',lw=2)
-	# #plot estimated left lateral distance
-	# plt.plot(bot_ys,distsL[1:],'r-',lw=2)
-	# #plot estimated right lateral distance
-	# plt.plot(bot_ys,-distsR[1:],'r-',lw=2)
-	# ax = plt.gca()
-	# ax.set_aspect('equal', 'datalim')
-	# plt.show()
+	plt.figure(1)
+	#plot lateral rows
+	plt.plot(ys-ys[0], xs,'g*', marker='.', linestyle='None')
+	#plot estimated position of the robot
+	plt.plot(bot_ys-ys[0],-centers[1:],'k',lw=2)
+	#plot estimated left lateral distance
+	plt.plot(bot_ys-ys[0],distsL[1:],'r-',lw=2)
+	#plot estimated right lateral distance
+	plt.plot(bot_ys-ys[0],-distsR[1:],'r-',lw=2)
+	ax = plt.gca()
+	ax.set_aspect('equal', 'datalim')
+	plt.show()
