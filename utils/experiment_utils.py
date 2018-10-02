@@ -34,7 +34,7 @@ def import_experiment_subdirs(exp_dir, verbose=False):
 		for dir in collected_subdirs:
 			print("\t[Experiment #%d] ----- %s" % (i,dir))
 			i += 1
-	return collected_subdirs
+	return collected_subdirs, len(collected_subdirs)
 
 
 def find_experiment(root_dir, exp_dir, verbose=False):
@@ -45,43 +45,43 @@ def find_experiment(root_dir, exp_dir, verbose=False):
 		if(verbose): print("%s ---- %s" % (str(exp_dir), sub_name) )
 
 		if str(exp_dir) == sub_name:
+			if(verbose): print("Found Experiment at ---- %s" % (exp) )
 			return exp
 # ========================================================
 #					Miscellaneous
 # ========================================================
-# # for files inside folders in an exp folder
-# for exp in iter(exps_dir):
-# for sub in exp.iterdir():
-
-
-# if 'exp' is not locals():
-#     exps = list(pTS)
-#     exp = exps[-1]
 
 
 # ========================================================
 #				 	  MAIN SYSTEM CALL
 # ========================================================
 if __name__ == '__main__':
-	# Desired Experiment for data
-	desired_experiment_subdirectory = 'corn-2'
-	desired_camera = 'cam_front'
-
-
-	# Read in all available experiments
-	exec(open("static_configuartion_params.py").read())
+	# Get the absolute path of this script regardless of where this script is called from
+	myPath = os.path.abspath(__file__)
+	myFolder = os.path.dirname(myPath)
+	myParentDir = os.path.dirname(myFolder)
+	# Change to repo root directory for easier calling of various paths
+	experiment_dir = os.path.join(myParentDir,"test_data/experiments/corn")
 
 	""" -------	EXPERIMENTS UTILITY TESTS ------- """
-	exDir = find_experiment(root_dir, desired_experiment_subdirectory)
+	exDir = find_experiment(experiment_dir, 'controlled', verbose=True)
 
 	# Get the available data collections within desired experiment's directory
-	exp_data_dirs = import_experiment_subdirs(exDir)
+	exp_sub_dirs, nSubdirs = import_experiment_subdirs(exDir, verbose=True)
+
+	dirNames = []
+	for sub in exp_sub_dirs:
+		dirNames.append(os.path.basename(str(sub)))
+
+	print tuple(dirNames)
 
 	""" -------	COLLECTION UTILITY TESTS ------- """
-	# Choose a random data collection directory from test experiment
-	tmp_collection = exp_data_dirs[1]
-	# Get sample collection's available data
-	show_collection_contents(tmp_collection, True)
+	# collection_paths, nFound = find_collections(experiment_dir)
+
+	# # Choose a random data collection directory from test experiment
+	# tmp_collection = exp_data_dirs[1]
+	# # Get sample collection's available data
+	# show_collection_contents(tmp_collection, True)
 
 	# exp_manifest = collections.OrderedDict()
 	# test_data_manifest_id = os.path.basename(tmp_collection)

@@ -156,27 +156,65 @@ def find_collections(search_dir, collection_patterns=None,datalog_patterns=None,
 
 	return found_collections,nFound
 
-
 """ TODO:
 	Retrieves all the information available for any given collection into a
 	dictionary
 """
-def create_collection_manifest_entry(collection_path, verbose=False):
-	# TODO: this function should create something similar to the following dict
-	dummy_collection_dict1 = {
-		'id':1,
-		'system_data':[],
-		'camera_data':{
-			'log_data':[],
-			'video_data':"/path/to/location/of/recorded/video1.mp4"
-		},
-		'lidar_data':[],
-		'perception_lidar_data':{
-			'config':[],
-			'data':[]
-		}
+def get_collection(collection_path, verbose=False):
+	cDict = {}		# Entire Collection dictionary for storing everything
+	plDict = {}		# Dictionary for storing perception lidar data and config
+
+	cName = os.path.basename(collection_path)
+	cDict['name'] = cName
+	cDict['path'] = collection_path
+
+	if(verbose):
+		print("\nGetting all data available for specified collection.... %s", cName)
+		print("\t[INFO] full collection path ----- %s" % (str(collection_path)))
+
+	# ------------ Get System log data ----------------
+	tmpData = get_system_data(collection_path)
+	# Store data if one exists otherwise throw warning
+	if tmpData is None:
+		print("\t[WARNING] Could not find system log data!")
+	else:
+		cDict['system_log'] = tmpData
+
+	# ------------ Get Raw Lidar log data ----------------
+	tmpData = get_raw_lidar_data(collection_path)
+	# Store data if one exists otherwise throw warning
+	if tmpData is None:
+		print("\t[WARNING] Could not find raw lidar log data!")
+	else:
+		cDict['lidar_log'] = tmpData
+
+	# ------------ Get Perception Lidar log data ----------------
+	tmpData, tmpConfig = get_perception_lidar_data(collection_path)
+	# Store data if one exists otherwise throw warning
+	if tmpData is None:
+		print("\t[WARNING] Could not find perception lidar log data!")
+	else:
+		plDict['data'] = tmpData
+	# Store configuration if one exists otherwise throw warning
+	if tmpConfig is None:
+		print("\t[WARNING] Could not find perception lidar log configuration!")
+	else:
+		plDict['config'] = tmpConfig
+
+	cDict['perception_lidar'] = plDict
+
+	# ------------ TODO: Get Camera log data ----------------
+	camDict = {
+		'id':"front",
+		'log':[],
+		'video':"/path/to/location/of/recorded/video1.mp4"
 	}
-	return dummy_collection_dict1
+	cDict['camera_front'] = camDict
+
+	# ------------ ----------------
+	if(verbose): print cDict['perception_lidar']['config']
+
+	return cDict
 
 # ========================================================
 #				 	  MAIN SYSTEM CALL
@@ -192,7 +230,8 @@ if __name__ == '__main__':
 	myFolder = os.path.dirname(myPath)
 	myParentDir = os.path.dirname(myFolder)
 	# Change to repo root directory for easier calling of various paths
-	collection_dir = os.path.join(myParentDir,"test_data/collections")
+	# collection_dir = os.path.join(myParentDir,"test_data/collections") # Original
+	collection_dir = os.path.join(myParentDir,"test_data/experiments/corn/controlled")
 
 	""" -------	SEARCHING OF COLLECTIONS ------- """
 	if TEST_SEARCHING:
@@ -200,6 +239,8 @@ if __name__ == '__main__':
 		collection_paths, nFound = find_collections(collection_dir, verbose=True)
 		print("\n\t[YAY!!] Successfully retrieved %d data collections!" % (nFound) )
 		time.sleep(1)
+
+		get_collection(collection_paths[0])
 
 	""" -------	MISCELLANEOUS TESTS ------- """
 	if TEST_MISC:

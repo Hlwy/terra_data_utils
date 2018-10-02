@@ -4,6 +4,8 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.widgets import CheckButtons		# Using this for dynamic overlaying of multiple data collections
+
 
 # Add to utils
 # from utils import experiment_utils as eut
@@ -64,10 +66,10 @@ def get_estimated_offset_from_reference(distances_left, distances_right, ref_off
 	estimated_center = 0.5 * (distances_right - distances_left) - ref_offset
 	return estimated_center
 
-def get_avg_speed(encoders_left, encoders_right):
+def get_avg_speed(encoders_left, encoders_right,gain=-1.75):
 	bot_spd = (encoders_left + encoders_right) / 2
 	avg_spd = np.nanmean(bot_spd)
-	return avg_spd*pow(10,-1.75) # Simulation
+	return avg_spd*pow(10,gain) # Simulation
 	# return avg_spd*pow(10,-1.15) # Real
 
 def get_estimated_robot_position(avg_spd, times):
@@ -80,7 +82,7 @@ def get_estimated_robot_position(avg_spd, times):
 	return y_robot
 
 
-def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
+def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_speed_multiplier=-1.75):
 	""" NOTE:
 
 		- l_ts	: lidar_log times
@@ -100,8 +102,13 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 	# print lidarLog.iloc[2,1:].values
 
 	# Perception Lidar data
-	plLog = perception_lidar_data[0]
-	plConfig = perception_lidar_data[1]
+	if isinstance(perception_lidar_data, dict):
+		plLog = perception_lidar_data['data']
+		plConfig = perception_lidar_data['config']
+	elif isinstance(perception_lidar_data, list):
+		plLog = perception_lidar_data[0]
+		plConfig = perception_lidar_data[1]
+
 
 	plTimes = plLog['timestamp']
 	plLidTimes = plLog['lidar_ts_ms']
@@ -117,9 +124,9 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 
 	# Calculate Intermediate Values
 	estimatedCenters = get_estimated_offset_from_reference(distsL, distsR, ref_offset)
-	avg_spd = get_avg_speed(encsL, encsR)
+	avg_spd = get_avg_speed(encsL, encsR,avg_speed_multiplier)
 	y_bot = get_estimated_robot_position(avg_spd, plTimes)
-	print avg_spd
+	print("\n\tProcessing Perception Lidar Data --- Calculated Average Speed ---- %f" % (avg_spd) )
 	# Loop through perception lidar data
 	index0 = 1
 	x_raw=[]
@@ -197,30 +204,52 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data):
 	return x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR
 
 
-def plot_data():
-	plt.figure(1)
-	plt.cla()
-	#plot lateral rows
-	plt.plot(y_raw-y_raw[0], x_raw,'g*', marker='.', linestyle='None')
-	#plot estimated position of the robot
-	plt.plot(y_robot-y_raw[0],-estimated_center[1:],'k',lw=2)
-	#plot estimated left lateral distance
-	plt.plot(y_robot-y_raw[0],dl[1:],'r-',lw=2)
-	#plot estimated right lateral distance
-	plt.plot(y_robot-y_raw[0],-dr[1:],'r-',lw=2)
-	ax = plt.gca()
-	ax.set_aspect('equal', 'datalim')
-	plt.show()
+def prepare_plot_data(processed_perception_data):
+	# Initialize empty list dedicated to storing each plots pair of data
+	plot_data_pairs = []
+	# Initialize the generic labels to be used for the legend
+	labels = ['lidar readings', 'estimated bot position', 'estimated distance (Left)', 'estimated distance (Right)']
+	# Extract combined processed data
+	# NOTE: should be in form of [x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR]
+	raw_xs, raw_ys, bot_ys, centers, distsL, distsR = processed_perception_data
+
+	# ------------ raw lidar readings ----------------
+	lidar_plot = [raw_ys-raw_ys[0], raw_xs]
+	# ------------ estimated robot center ----------------
+	estCents = [bot_ys-raw_ys[0], (-1)*centers[1:]]
+	# ------------ lateral distance left ----------------
+	dLs = [bot_ys-raw_ys[0], distsL[1:]]
+	# ------------ lateral distance right ----------------
+	dRs = [bot_ys-raw_ys[0], (-1)*distsR[1:]]
+
+	return [lidar_plot,estCents,dLs,dRs], labels
+
+
+	# plt.figure(1)
+	# plt.cla()
+	# #plot lateral rows
+	# plt.plot(y_raw-y_raw[0], x_raw,'g*', marker='.', linestyle='None')
+	# #plot estimated position of the robot
+	# plt.plot(y_robot-y_raw[0],-estimated_center[1:],'k',lw=2)
+	# #plot estimated left lateral distance
+	# plt.plot(y_robot-y_raw[0],dl[1:],'r-',lw=2)
+	# #plot estimated right lateral distance
+	# plt.plot(y_robot-y_raw[0],-dr[1:],'r-',lw=2)
+	# ax = plt.gca()
+	# ax.set_aspect('equal', 'datalim')
+	# plt.show()
 
 # ========================================================
 #				 	  MAIN SYSTEM CALL
 # ========================================================
 if __name__ == '__main__':
 
+	# DEBUG FLAGS
+	DEBUG_METH = 1
+
 	dLs = []	# System Datalogs
 	lLs = []	# Raw Lidar Datalogs
 	plLs = []	# Perception Lidar Datalogs
-	# plcLs = []	# Perception Lidar Configs
 
 	# Get the absolute path of this script regardless of where this script is called from
 	myPath = os.path.abspath(__file__)
@@ -230,34 +259,92 @@ if __name__ == '__main__':
 	experiment_dir = os.path.join(myParentDir,"test_data/experiments")
 	collection_paths, nFound = find_collections(experiment_dir)
 
-	for path in collection_paths:
-		sysData = get_system_data(path)
-		lData = get_raw_lidar_data(path)
-		plData, plConfigs = get_perception_lidar_data(path)
+	""" ============================
+		Simple Example: Single Plot
+	================================ """
+	if DEBUG_METH is 0:
+		for path in collection_paths:
+			sysData = get_system_data(path)
+			lData = get_raw_lidar_data(path)
+			plData, plConfigs = get_perception_lidar_data(path)
 
-		dLs.append(sysData)
-		lLs.append(lData)
-		plLs.append([plData, plConfigs])
-		# plcLs.append(plConfigs)
+			dLs.append(sysData)
+			lLs.append(lData)
+			plLs.append([plData, plConfigs])
 
-	# Do Stuff
-	# tmpData = lLs[1]
-	# print tmpData.shape
-	# print tmpData[0][:]
+		xs, ys, bot_ys, centers, distsL,distsR = process_lidar_logs(lLs[1], plLs[1], dLs[1])
 
-	xs, ys, bot_ys, centers, distsL,distsR = process_lidar_logs(lLs[1], plLs[1], dLs[1])
+		plt.figure(1)
+		#plot lateral rows
+		plt.plot(ys-ys[0], xs,'g*', marker='.', linestyle='None')
+		#plot estimated position of the robot
+		plt.plot(bot_ys-ys[0],-centers[1:],'k',lw=2)
+		#plot estimated left lateral distance
+		plt.plot(bot_ys-ys[0],distsL[1:],'r-',lw=2)
+		#plot estimated right lateral distance
+		plt.plot(bot_ys-ys[0],-distsR[1:],'r-',lw=2)
+		ax = plt.gca()
+		ax.set_aspect('equal', 'datalim')
+		plt.show()
 
-	print xs.shape
+	""" ================================
+		Complex Example: Mulitple Plots
+	===================================== """
+	if DEBUG_METH is 1:
+		meta_plot_data = []
+		figs = []
 
-	plt.figure(1)
-	#plot lateral rows
-	plt.plot(ys-ys[0], xs,'g*', marker='.', linestyle='None')
-	#plot estimated position of the robot
-	plt.plot(bot_ys-ys[0],-centers[1:],'k',lw=2)
-	#plot estimated left lateral distance
-	plt.plot(bot_ys-ys[0],distsL[1:],'r-',lw=2)
-	#plot estimated right lateral distance
-	plt.plot(bot_ys-ys[0],-distsR[1:],'r-',lw=2)
-	ax = plt.gca()
-	ax.set_aspect('equal', 'datalim')
-	plt.show()
+		# Get all recognizable datalogs for each recognizable collection folder
+		cDicts = [get_collection(path) for path in collection_paths]
+		# Retrieve all collected data collection folder names for displaying each check box in graph
+		dirNames = [tmpDict['name'] for tmpDict in cDicts]
+		chkBoxFlags = tuple([False for i in range(0,len(dirNames))])
+
+		for cDict in cDicts:
+			tmpOut = process_lidar_logs(cDict['lidar_log'], cDict['perception_lidar'], cDict['system_log'])
+			tmpPlotData, tmpLabels = prepare_plot_data(tmpOut)
+			# Add collection name as prefix for all associated plot labels
+			labels = [str(cDict['name']) + "-" + lbl for lbl in tmpLabels]
+
+			meta_plot_data.append([tmpPlotData,labels])
+
+		# Initialize Figure
+		fig, ax = plt.subplots()
+		plt.subplots_adjust(left=0.2)
+
+		# Loop through all plots
+		for figData, figLbl in meta_plot_data:
+			figLsts = []
+			# print figLbl
+			# print
+			for i in range(0,len(figLbl)):
+				tmpFig1, = ax.plot(figData[i][0], figData[i][1], visible=False, marker='.',linestyle='None', label=figLbl[i][0])
+				tmpFig2, = ax.plot(figData[i][0], figData[i][1], visible=False, marker="4",linestyle='-', label=figLbl[i][1])
+				tmpFig3, = ax.plot(figData[i][0], figData[i][1], visible=False, marker='_',linestyle='--', label=figLbl[i][2])
+				tmpFig4, = ax.plot(figData[i][0], figData[i][1], visible=False, marker='_',linestyle='--', label=figLbl[i][3])
+				figLsts.append([tmpFig1,tmpFig2,tmpFig3,tmpFig4])
+
+		rax = plt.axes([0.05, 0.4, 0.1, 0.15])
+		check = CheckButtons(rax, tuple(dirNames), chkBoxFlags)
+
+
+		# print meta_plot_data.shape
+		def func(label):
+			for i in range(0,len(dirNames)):
+				if label == dirNames[i]:
+					for subFigs in figLsts[i]:
+						# print len(subFigs)
+						subFigs.set_visible(not subFigs.get_visible())
+					plt.draw()
+			# [value if condition else value for value in variable if label == ]
+			#
+			# if label == '2 Hz':
+			# 	l0.set_visible(not l0.get_visible())
+			# elif label == '4 Hz':
+			# 	l1.set_visible(not l1.get_visible())
+			# elif label == '6 Hz':
+			# 	l2.set_visible(not l2.get_visible())
+
+		check.on_clicked(func)
+
+		plt.show()
