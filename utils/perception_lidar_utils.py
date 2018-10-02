@@ -222,7 +222,7 @@ def prepare_plot_data(processed_perception_data):
 	# ------------ lateral distance right ----------------
 	dRs = [bot_ys-raw_ys[0], (-1)*distsR[1:]]
 
-	return [lidar_plot,estCents,dLs,dRs], labels
+	return lidar_plot,estCents,dLs,dRs, labels
 
 
 	# plt.figure(1)
