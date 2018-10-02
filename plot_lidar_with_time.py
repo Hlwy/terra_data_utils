@@ -3,7 +3,6 @@
 import argparse
 from utils.perception_lidar_utils import *
 from utils.experiment_utils import *
-import matplotlib.cm as cm						# Color Maps
 from matplotlib.widgets import CheckButtons		# Using this for dynamic overlaying of multiple data collections
 
 def collect_experiments():
@@ -23,44 +22,58 @@ def collect_experiments():
 
 	# Retrieve all collected data collection folder names for displaying each check box in graph
 	dirNames = tuple([tmpDict['name'] for tmpDict in collections])
-
 	return collections, dirNames
 
-
-def setup_figure(collections, box_names):
-	fig, ax = plt.subplots()
-	print box_names
-
+def setup_plot_data(collections):
+	figDs = []
 	for collect in collections:
+		if fnmatch.fnmatch(str(collect['name']), '*real*'):
+			print("Real")
+			spd_gain = -1
+		elif fnmatch.fnmatch(str(collect['name']), '*sim*'):
+			print("Simulated")
+			spd_gain = -1.75
+			spd_gain = -1.6
 
+		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'],spd_gain)
+		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut)
 
-		# xs, ys, bot_ys, centers, distsL,distsR = process_lidar_logs(lData, [plData, plConfig], sysData)
+		tmpData = [lids,cents,dLs,dRs, lbls, str(collect['name'])]
+		figDs.append(tmpData)
 
-	# plt.figure(1)
-	# #plot lateral rows
-	# plt.plot(ys-ys[0], xs,'g*', marker='.', linestyle='None')
-	# #plot estimated position of the robot
-	# plt.plot(bot_ys-ys[0],-centers[1:],'k',lw=2)
-	# #plot estimated left lateral distance
-	# plt.plot(bot_ys-ys[0],distsL[1:],'r-',lw=2)
-	# #plot estimated right lateral distance
-	# plt.plot(bot_ys-ys[0],-distsR[1:],'r-',lw=2)
-	# ax = plt.gca()
-	# ax.set_aspect('equal', 'datalim')
-	# plt.show()
+	return figDs, len(figDs)
+
+""" ================================
+			Mulitple Plots
+===================================== """
+fig, ax = plt.subplots()
 
 dCollects,dirNames = collect_experiments()
-setup_figure(dCollects,dirNames)
-# plt.figure(1)
-# plt.cla()
-# #plot lateral rows
-# plt.plot(y_raw-y_raw[0], x_raw,'g*', marker='.', linestyle='None')
-# #plot estimated position of the robot
-# plt.plot(y_robot-y_raw[0],-estimated_center[1:],'k',lw=2)
-# #plot estimated left lateral distance
-# plt.plot(y_robot-y_raw[0],dl[1:],'r-',lw=2)
-# #plot estimated right lateral distance
-# plt.plot(y_robot-y_raw[0],-dr[1:],'r-',lw=2)
-# ax = plt.gca()
-# ax.set_aspect('equal', 'datalim')
-# plt.show()
+plotData, nPlots = setup_plot_data(dCollects)
+
+# Retrieve all collected data collection folder names for displaying each check box in graph
+names = [cName for _,_,_,_,_,cName in plotData]
+chkBoxFlags = tuple([False for i in range(0,nPlots)])
+rax = plt.axes([0.05, 0.4, 0.1, 0.15])
+check = CheckButtons(rax, tuple(names), chkBoxFlags)
+
+fLM1, = ax.plot(plotData[0][0][0], plotData[0][0][1], visible=False, marker='.',linestyle='None', label=plotData[0][4][0])
+fLM2, = ax.plot(plotData[1][0][0], plotData[1][0][1], visible=False, marker='.',linestyle='None', label=plotData[1][4][0])
+lidFigs = [fLM1,fLM2]
+
+ax.legend(loc='upper left')
+ax.set_aspect('equal', 'datalim')
+
+def func(label):
+	for name in names:
+		if label == name:
+			idx = names.index(name)
+			lidFigs[idx].set_visible(not lidFigs[idx].get_visible())
+
+		plt.draw()
+		ax.legend(loc='upper left')
+		ax.set_aspect('equal', 'datalim')
+
+
+check.on_clicked(func)
+plt.show()

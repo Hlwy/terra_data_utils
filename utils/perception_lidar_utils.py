@@ -109,6 +109,7 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 		plLog = perception_lidar_data[0]
 		plConfig = perception_lidar_data[1]
 
+	plLog.info()
 
 	plTimes = plLog['timestamp']
 	plLidTimes = plLog['lidar_ts_ms']

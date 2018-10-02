@@ -34,6 +34,8 @@ def setup_plot_data(collections):
 			print("Simulated")
 			spd_gain = -1.75
 			spd_gain = -1.6
+		else:
+			spd_gain = -1
 
 		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'],spd_gain)
 		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut)
