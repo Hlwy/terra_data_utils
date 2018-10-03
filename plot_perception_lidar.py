@@ -16,7 +16,8 @@ def collect_experiments():
 	# Find all recognizable collection folders
 	collection_paths, nFound = find_collections(exp_path, verbose=True)
 	# Get all recognizable datalogs for each recognizable collection folder
-	collections = [get_collection(path) for path in collection_paths]
+	if nFound == 1: collections = [get_collection(collection_paths,verbose=True)]
+	else: collections = [get_collection(path,verbose=True) for path in collection_paths]
 	# print len(collections)
 
 	# Retrieve all collected data collection folder names for displaying each check box in graph
@@ -30,12 +31,15 @@ def setup_plot_data(collections):
 		if fnmatch.fnmatch(str(collect['name']), '*real*'):
 			print("Real")
 			spd_gain = -1
+		elif fnmatch.fnmatch(str(collect['name']), '*simrun2*'):
+			print("Simulated Run 2")
+			spd_gain = -1.9
 		elif fnmatch.fnmatch(str(collect['name']), '*sim*'):
 			print("Simulated")
 			spd_gain = -1.75
-			spd_gain = -1.6
+			spd_gain = -1.5
 		else:
-			spd_gain = -1
+			spd_gain = -1.15
 
 		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'],spd_gain)
 		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut)
@@ -60,9 +64,11 @@ chkBoxFlags = tuple([False for i in range(0,nPlots)])
 rax = plt.axes([0.05, 0.4, 0.1, 0.15])
 check = CheckButtons(rax, tuple(names), chkBoxFlags)
 
-fLM1, = ax.plot(plotData[0][0][0], plotData[0][0][1], visible=False, marker='.',linestyle='None', label=plotData[0][4][0])
+fLM1, = ax.plot(plotData[0][0][0], plotData[0][0][1]+0.09, visible=False, marker='.',linestyle='None', label=plotData[0][4][0])
 fLM2, = ax.plot(plotData[1][0][0], plotData[1][0][1], visible=False, marker='.',linestyle='None', label=plotData[1][4][0])
-lidFigs = [fLM1,fLM2]
+fLM3, = ax.plot(plotData[2][0][0], plotData[2][0][1], visible=False, marker='.',linestyle='None', label=plotData[2][4][0])
+fLM4, = ax.plot(plotData[3][0][0], plotData[3][0][1]+0.09, visible=False, marker='.',linestyle='None', label=plotData[3][4][0])
+lidFigs = [fLM1,fLM2,fLM3,fLM4]
 
 ax.legend(loc='upper left')
 ax.set_aspect('equal', 'datalim')
@@ -73,9 +79,9 @@ def func(label):
 			idx = names.index(name)
 			lidFigs[idx].set_visible(not lidFigs[idx].get_visible())
 
-		plt.draw()
 		ax.legend(loc='upper left')
 		ax.set_aspect('equal', 'datalim')
+		plt.draw()
 
 
 check.on_clicked(func)

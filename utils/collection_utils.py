@@ -169,7 +169,7 @@ def get_collection(collection_path, verbose=False):
 	cDict['path'] = collection_path
 
 	if(verbose):
-		print("\nGetting all data available for specified collection.... %s", cName)
+		print("\nGetting all data available for specified collection.... %s" % cName)
 		print("\t[INFO] full collection path ----- %s" % (str(collection_path)))
 
 	# ------------ Get System log data ----------------
@@ -212,7 +212,7 @@ def get_collection(collection_path, verbose=False):
 	cDict['camera_front'] = camDict
 
 	# ------------ ----------------
-	if(verbose): print cDict['perception_lidar']['config']
+	# if(verbose): print cDict['perception_lidar']['config']
 
 	return cDict
 

@@ -19,6 +19,7 @@ essential information
 """
 
 import os
+import glob
 import fnmatch
 from import_utils import *
 
@@ -29,7 +30,7 @@ def find_system_logs(search_path, patterns=None, verbose=False):
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		patterns = ['*datalog*.txt','*system_log']
+		patterns = ['*system_log']
 
 	if(verbose):
 		print("\nSearching for system logs in data collection....")
@@ -43,6 +44,12 @@ def find_system_logs(search_path, patterns=None, verbose=False):
 				if fnmatch.fnmatch(file, pat):	# Check for a match
 					tmp = os.path.join(root, file)
 					found_paths.append(tmp)
+
+	if(len(found_paths) == 0):
+		tmpStr = str(search_path) + "/*datalog/datalog*.txt"
+		# print tmpStr
+		found_paths = glob.glob(tmpStr)
+		# print tmp
 
 	# See how many were found
 	nFound = len(found_paths)
@@ -121,8 +128,8 @@ def find_lidar_logs(search_path, patterns=None, specific_target=None,verbose=Fal
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		# patterns = ['*datalog-lidar*measurements.txt','*lidar_log']
-		patterns = ['*lidar_log']
+		patterns = ['*datalog-lidar*measurements.txt','*lidar_log']
+		# patterns = ['*lidar_log']
 
 	if(verbose):
 		print("\nSearching for available Lidars recorded in data collection....")
@@ -165,15 +172,15 @@ def find_lidar_logs(search_path, patterns=None, specific_target=None,verbose=Fal
 		for log in found_paths:
 			print("\t\t- %s" % log)
 
-	return data_path, nReturn, nFound
+	return data_path, nReturn, nFound, found_paths
 
 
 def find_perception_lidar_logs(search_path, patterns=None,specific_target=None,verbose=False):
 	found_paths = []
 	# Filename patterns associated with an acceptable datalog
 	if patterns == None:
-		# patterns = ['*datalog-lidar*perception.txt','*perception_lidar_log']
-		patterns = ['*perception_lidar_log']
+		patterns = ['*datalog-lidar*perception.txt','*perception_lidar_log']
+		# patterns = ['*perception_lidar_log']
 
 	if(verbose):
 		print("\nSearching for available Perception Lidar recorded in data collection....")
@@ -216,7 +223,7 @@ def find_perception_lidar_logs(search_path, patterns=None,specific_target=None,v
 		for log in found_paths:
 			print("\t\t- %s" % log)
 
-	return data_path, nReturn, nFound
+	return data_path, nReturn, nFound, found_paths
 
 
 # ========================================================
@@ -229,7 +236,7 @@ def get_system_data(path, verbose=False):
 		print("\t[INFO] parent directory ----- %s" % (str(path)))
 
 	# Find all available camera log directories
-	log_path, nLogs = find_system_logs(path,verbose=verbose)
+	log_path, nLogs = find_system_logs(path,verbose=True)
 	if(verbose): print("\t[INFO] Found %d system logs" % (nLogs) )
 
 	# Exiting Conditions
@@ -252,7 +259,7 @@ def get_camera_log_data(path, target_camera, verbose=False):
 		print("\t[INFO] parent directory ----- %s" % (str(path)))
 
 	# Find all available camera log directories
-	cam_path, nReturn, nFound = find_camera_logs(path,specific_target=target_camera,verbose=False)
+	cam_path, nReturn, nFound = find_camera_logs(path,specific_target=target_camera,verbose=verbose)
 	if(len(cam_path) <= 0):
 		print("\t[WARNING] No camera data could be found!")
 		output_data = None
@@ -272,13 +279,29 @@ def get_raw_lidar_data(path, target_lidar="lidar_log", verbose=False):
 		print("\t[INFO] parent directory ----- %s" % (str(path)))
 
 	# Find all available camera log directories
-	log_path, nLogs, _ = find_lidar_logs(path,specific_target=target_lidar, verbose=verbose)
-	if(verbose): print("\n\t[INFO] Found Lidar log at \'%s\'\n" % (log_path) )
+	log_path, nReturned, nFound, found_paths = find_lidar_logs(path,specific_target=target_lidar, verbose=verbose)
+
+	# Pre-Checking Conditions
+	if(nReturned == 0):
+		if(nFound > 0):
+			if(nFound == 1):
+				nLogs = 1
+				log_path = found_paths[0]
+			else:
+				nLogs = nFound
+				log_path = found_paths
+			print("\t[WARNING] Specific Lidar log data could not be found.\tReturning all %d found Lidar logs." % nFound)
+		else:
+			nLogs = 0
+	else:
+		nLogs = nReturned
+
 	# Exiting Conditions
 	if(nLogs == 0):
-		print("\t[WARNING] No Lidar log data could be found!")
+		print("\t[ERROR] No Lidar log data could be found!")
 		output_data = None
 	elif(nLogs == 1):
+		if(verbose): print("\n\t[INFO] Found Lidar log at \'%s\'\n" % (log_path) )
 		tmp_data = read_datalog(log_path, has_header = False, skip_n = 0,show=verbose)
 
 		""" NOTE: This portion is to handle previous datalogs that
@@ -313,9 +336,25 @@ def get_perception_lidar_data(path, target_lidar="perception_lidar_log", verbose
 		print("\nGetting available Perception Lidar data recorded for Collection:")
 		print("\t[INFO] parent directory ----- %s" % (str(path)))
 
+
 	# Find all available camera log directories
-	log_path, nLogs, _ = find_perception_lidar_logs(path,specific_target=target_lidar, verbose=False)
-	if(verbose): print("\n\t[INFO] Found Perception Lidar log at \'%s\'\n" % (log_path) )
+	log_path, nReturned, nFound, found_paths = find_perception_lidar_logs(path,specific_target=target_lidar, verbose=verbose)
+
+	# Pre-Checking Conditions
+	if(nReturned == 0):
+		if(nFound > 0):
+			if(nFound == 1):
+				nLogs = 1
+				log_path = found_paths[0]
+			else:
+				nLogs = nFound
+				log_path = found_paths
+			print("\t[WARNING] Specific Perception Lidar log data could not be found.\tReturning all %d found Perception Lidar logs." % nFound)
+		else:
+			nLogs = 0
+	else:
+		nLogs = nReturned
+
 
 	# Exiting Conditions
 	if(nLogs == 0):
@@ -323,6 +362,7 @@ def get_perception_lidar_data(path, target_lidar="perception_lidar_log", verbose
 		output_data = None
 		config_data = None
 	elif(nLogs == 1):
+		if(verbose): print("\n\t[INFO] Found Perception Lidar log at \'%s\'\n" % (log_path) )
 		output_data, config_data = read_perception_lidar_log(log_path, verbose=verbose)
 	else:
 		print("!!!!! [TODO] Handle collecting multiple logs for  \'get_collection_data_perception_lidar\'")

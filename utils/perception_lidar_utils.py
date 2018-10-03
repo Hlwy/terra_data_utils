@@ -100,7 +100,8 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 
 	# print raw_lidar_times
 	# print lidarLog.iloc[2,1:].values
-
+	# plLog.info()
+	
 	# Perception Lidar data
 	if isinstance(perception_lidar_data, dict):
 		plLog = perception_lidar_data['data']
@@ -108,8 +109,6 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 	elif isinstance(perception_lidar_data, list):
 		plLog = perception_lidar_data[0]
 		plConfig = perception_lidar_data[1]
-
-	plLog.info()
 
 	plTimes = plLog['timestamp']
 	plLidTimes = plLog['lidar_ts_ms']
