@@ -6,7 +6,7 @@ from utils.perception_lidar_utils import *
 
 def collect_experiments():
 	ap = argparse.ArgumentParser(description='Plots the perception lidar outputs for the entire length of collection')
-	ap.add_argument("--experiment", "-e",           type=str,   default='test_data/experiments/corn', help="Name of the directory associated with the experiment user wants to plot data from.")
+	ap.add_argument("--experiment", "-e",           type=str,   default='test_data/experiments/controlled', help="Name of the directory associated with the experiment user wants to plot data from.")
 	# Store parsed arguments into array of variables
 	args = vars(ap.parse_args())
 
@@ -41,7 +41,7 @@ def setup_plot_data(collections):
 		else:
 			spd_gain = -1.15
 
-		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'],spd_gain)
+		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'])
 		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut)
 
 		tmpData = [lids,cents,dLs,dRs, lbls, str(collect['name'])]
@@ -64,8 +64,8 @@ chkBoxFlags = tuple([False for i in range(0,nPlots)])
 rax = plt.axes([0.05, 0.4, 0.1, 0.15])
 check = CheckButtons(rax, tuple(names), chkBoxFlags)
 
-fLM1, = ax.plot(plotData[0][0][0], plotData[0][0][1]+0.09, visible=False, marker='.',linestyle='None', label=plotData[0][4][0])
-fLM2, = ax.plot(plotData[1][0][0], plotData[1][0][1], visible=False, marker='.',linestyle='None', label=plotData[1][4][0])
+fLM1, = ax.plot(plotData[0][0][0], plotData[0][0][1], visible=False, marker='.',linestyle='None', label=plotData[0][4][0])
+fLM2, = ax.plot(plotData[1][0][0], plotData[1][0][1]+0.09, visible=False, marker='.',linestyle='None', label=plotData[1][4][0])
 fLM3, = ax.plot(plotData[2][0][0], plotData[2][0][1], visible=False, marker='.',linestyle='None', label=plotData[2][4][0])
 fLM4, = ax.plot(plotData[3][0][0], plotData[3][0][1]+0.09, visible=False, marker='.',linestyle='None', label=plotData[3][4][0])
 lidFigs = [fLM1,fLM2,fLM3,fLM4]

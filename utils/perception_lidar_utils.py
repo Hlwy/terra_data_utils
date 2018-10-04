@@ -70,9 +70,29 @@ def get_avg_speed(encoders_left, encoders_right,gain=-1.75):
 	bot_spd = (encoders_left + encoders_right) / 2
 	avg_spd = np.nanmean(bot_spd)
 	return avg_spd*pow(10,gain) # Simulation
-	# return avg_spd*pow(10,-1.15) # Real
 
-def get_estimated_robot_position(avg_spd, times):
+def get_speeds(encoders_left, encoders_right):
+	bot_spd = (encoders_left + encoders_right) / 2
+	return bot_spd
+
+def get_estimated_robot_position(speeds, times):
+	# prev_pt = 0
+	pts = [0]
+	ts = np.array(times)	# System times after data collection start [ms]
+	print len(speeds)
+	for i in range(1,len(ts)):
+		
+		dt = (ts[i] - ts[i-1])*pow(10,-3)
+		pt = pts[i-1] + speeds[i-1]*dt
+		pts.append(pt)
+		# print("[%d] --- %f - %f = %f ---- Speed (m/s) = %f" % (i, ts[i], ts[i-1], dt, spds[i]) )
+	# Debug
+	print len(pts)
+
+	return pts
+
+
+def get_avg_displacements(avg_spd, times):
 	t0 = times[0]				# Initial System Time [ms] of datalog
 	ts = np.array(times[1:])	# System times after data collection start [ms]
 	# Get the change in time [sec] since the beginning of collection
@@ -81,6 +101,8 @@ def get_estimated_robot_position(avg_spd, times):
 	y_robot = avg_spd * dts # [Eq.] position = velocity * dt
 	return y_robot
 
+
+# def interpolate_speeds(system_times, perception_times,)
 
 def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_speed_multiplier=-1.75):
 	""" NOTE:
@@ -101,7 +123,7 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 	# print raw_lidar_times
 	# print lidarLog.iloc[2,1:].values
 	# plLog.info()
-	
+
 	# Perception Lidar data
 	if isinstance(perception_lidar_data, dict):
 		plLog = perception_lidar_data['data']
@@ -112,6 +134,8 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 
 	plTimes = plLog['timestamp']
 	plLidTimes = plLog['lidar_ts_ms']
+	plEncsL = plLog['enc_left']
+	plEncsR = plLog['enc_right']
 
 	distsL = plLog['distance_left']
 	distsR = plLog['distance_right']
@@ -124,9 +148,15 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 
 	# Calculate Intermediate Values
 	estimatedCenters = get_estimated_offset_from_reference(distsL, distsR, ref_offset)
+
 	avg_spd = get_avg_speed(encsL, encsR,avg_speed_multiplier)
-	y_bot = get_estimated_robot_position(avg_spd, plTimes)
-	print("\n\tProcessing Perception Lidar Data --- Calculated Average Speed ---- %f" % (avg_spd) )
+	# y_bot = get_avg_displacements(avg_spd, plTimes)
+	# print("\n\tProcessing Perception Lidar Data --- Calculated Average Speed ---- %f" % (avg_spd) )
+
+	spds = get_speeds(plEncsL, plEncsR)
+	y_bot = get_estimated_robot_position(spds, plTimes)
+
+
 	# Loop through perception lidar data
 	index0 = 1
 	x_raw=[]
@@ -190,7 +220,8 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 
 		# TODO: Figure out logic
 		xf2 = np.array(xf2) - ref_offset
-		yf2 = np.array(yf2) + avg_spd*(plTimes[pl_scan_idx] - plTimes[0])*pow(10,-3)
+		# yf2 = np.array(yf2) + avg_spd*(plTimes[pl_scan_idx] - plTimes[0])*pow(10,-3)
+		yf2 = np.array(yf2) + y_bot[pl_scan_idx]
 		if len(yf2) > 0:
 			aux_maxy = max(yf2)
 			if aux_maxy > maxy:
@@ -208,7 +239,7 @@ def prepare_plot_data(processed_perception_data):
 	# Initialize empty list dedicated to storing each plots pair of data
 	plot_data_pairs = []
 	# Initialize the generic labels to be used for the legend
-	labels = ['lidar readings', 'estimated bot position', 'estimated distance (Left)', 'estimated distance (Right)']
+	labels = ['raw lidar readings', 'estimated bot position', 'estimated distance (Left)', 'estimated distance (Right)']
 	# Extract combined processed data
 	# NOTE: should be in form of [x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR]
 	raw_xs, raw_ys, bot_ys, centers, distsL, distsR = processed_perception_data
@@ -245,7 +276,7 @@ def prepare_plot_data(processed_perception_data):
 if __name__ == '__main__':
 
 	# DEBUG FLAGS
-	DEBUG_METH = 1
+	DEBUG_METH = 2
 
 	dLs = []	# System Datalogs
 	lLs = []	# Raw Lidar Datalogs
@@ -347,4 +378,32 @@ if __name__ == '__main__':
 
 		check.on_clicked(func)
 
+		plt.show()
+
+	""" ================================
+		 More accurate displacement test
+	===================================== """
+	if DEBUG_METH is 2:
+		cDicts = [get_collection(path) for path in collection_paths]
+		cName = cDicts[0]['name']
+		print("Collection Name:\t%s" % (cName) )
+		ll = cDicts[0]['lidar_log']
+		plls= cDicts[0]['perception_lidar']
+		pll = plls['data']
+		sl = cDicts[0]['system_log']
+
+		encsL = sl['speed calculation from encoder left (m/s)']
+		encsR = sl['speed calculation from encoder right (m/s)']
+		plEncsL = pll['enc_left']
+		plEncsR = pll['enc_right']
+		plTimes = pll['timestamp']
+
+		spds = get_speeds(plEncsL, plEncsR)
+		y_bot = get_estimated_robot_position(spds, plTimes)
+
+
+
+		fig, ax = plt.subplots()
+		plt.subplots_adjust(left=0.2)
+		tmpFig1, = ax.plot(y_bot, np.zeros(len(y_bot)), marker='.',linestyle='None')
 		plt.show()
