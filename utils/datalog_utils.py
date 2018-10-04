@@ -49,7 +49,7 @@ def find_system_logs(search_path, patterns=None, verbose=False):
 		tmpStr = str(search_path) + "/*datalog/datalog*.txt"
 		# print tmpStr
 		found_paths = glob.glob(tmpStr)
-		# print tmp
+		print found_paths
 
 	# See how many were found
 	nFound = len(found_paths)
