@@ -79,15 +79,15 @@ def get_estimated_robot_position(speeds, times):
 	# prev_pt = 0
 	pts = [0]
 	ts = np.array(times)	# System times after data collection start [ms]
-	print len(speeds)
+	# print len(speeds)
 	for i in range(1,len(ts)):
-		
+
 		dt = (ts[i] - ts[i-1])*pow(10,-3)
 		pt = pts[i-1] + speeds[i-1]*dt
 		pts.append(pt)
 		# print("[%d] --- %f - %f = %f ---- Speed (m/s) = %f" % (i, ts[i], ts[i-1], dt, spds[i]) )
 	# Debug
-	print len(pts)
+	# print len(pts)
 
 	return pts
 
@@ -198,6 +198,7 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 
 		# Check Sizes
 		# print len(scan_data)
+		# print "Projected Readings:", len(xf),len(yf)
 
 		# TODO: Figure out logic
 		E = 0.1
@@ -206,18 +207,22 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 		xf1 = []
 		yf1 = []
 		for i in range (0, len(yf)):
+			# print("\tyf[i] = %f ----- E = %f" % (yf[i], E) )
 			if abs(yf[i]) < E:
 				yf1.append(yf[i])
 				xf1.append(xf[i])
 
+		# print "Readings 1", len(xf1),len(yf1)
 		# TODO: Figure out logic
 		xf2 = []
 		yf2 = []
 		for i in range (0, len(xf1)):
+			# print("\txf1[i] = %f ----- E = %f" % (xf1[i], E0) )
 			if abs(xf1[i]) > E0:
 				yf2.append(yf1[i])
 				xf2.append(xf1[i])
 
+		# print "Readings 2", len(xf2),len(yf2)
 		# TODO: Figure out logic
 		xf2 = np.array(xf2) - ref_offset
 		# yf2 = np.array(yf2) + avg_spd*(plTimes[pl_scan_idx] - plTimes[0])*pow(10,-3)
@@ -230,6 +235,8 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 		# Store cartesian coordinates for later visualization
 		x_raw = np.append(x_raw,xf2)
 		y_raw = np.append(y_raw,yf2)
+
+	# print "Raw Readings Final", len(x_raw),len(y_raw)
 
 	# Return essential data
 	return x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR
@@ -245,30 +252,17 @@ def prepare_plot_data(processed_perception_data):
 	raw_xs, raw_ys, bot_ys, centers, distsL, distsR = processed_perception_data
 
 	# ------------ raw lidar readings ----------------
+	# print len(raw_ys), len(raw_xs)
 	lidar_plot = [raw_ys-raw_ys[0], raw_xs]
 	# ------------ estimated robot center ----------------
-	estCents = [bot_ys-raw_ys[0], (-1)*centers[1:]]
+	estCents = [bot_ys-raw_ys[0], (-1)*centers[0:]]
 	# ------------ lateral distance left ----------------
-	dLs = [bot_ys-raw_ys[0], distsL[1:]]
+	dLs = [bot_ys-raw_ys[0], distsL[0:]]
 	# ------------ lateral distance right ----------------
-	dRs = [bot_ys-raw_ys[0], (-1)*distsR[1:]]
+	dRs = [bot_ys-raw_ys[0], (-1)*distsR[0:]]
 
 	return lidar_plot,estCents,dLs,dRs, labels
 
-
-	# plt.figure(1)
-	# plt.cla()
-	# #plot lateral rows
-	# plt.plot(y_raw-y_raw[0], x_raw,'g*', marker='.', linestyle='None')
-	# #plot estimated position of the robot
-	# plt.plot(y_robot-y_raw[0],-estimated_center[1:],'k',lw=2)
-	# #plot estimated left lateral distance
-	# plt.plot(y_robot-y_raw[0],dl[1:],'r-',lw=2)
-	# #plot estimated right lateral distance
-	# plt.plot(y_robot-y_raw[0],-dr[1:],'r-',lw=2)
-	# ax = plt.gca()
-	# ax.set_aspect('equal', 'datalim')
-	# plt.show()
 
 # ========================================================
 #				 	  MAIN SYSTEM CALL

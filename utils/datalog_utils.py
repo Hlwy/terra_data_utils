@@ -236,7 +236,7 @@ def get_system_data(path, verbose=False):
 		print("\t[INFO] parent directory ----- %s" % (str(path)))
 
 	# Find all available camera log directories
-	log_path, nLogs = find_system_logs(path,verbose=True)
+	log_path, nLogs = find_system_logs(path,verbose=verbose)
 	if(verbose): print("\t[INFO] Found %d system logs" % (nLogs) )
 
 	# Exiting Conditions
