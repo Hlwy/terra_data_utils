@@ -239,10 +239,10 @@ def process_lidar_logs(raw_lidar_data, perception_lidar_data, system_data,avg_sp
 	# print "Raw Readings Final", len(x_raw),len(y_raw)
 
 	# Return essential data
-	return x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR
+	return x_raw, y_raw, np.array(y_bot), np.array(estimatedCenters), np.array(distsL), np.array(distsR)
 
 
-def prepare_plot_data(processed_perception_data):
+def prepare_plot_data(processed_perception_data, clip_lims=None):
 	# Initialize empty list dedicated to storing each plots pair of data
 	plot_data_pairs = []
 	# Initialize the generic labels to be used for the legend
@@ -251,15 +251,24 @@ def prepare_plot_data(processed_perception_data):
 	# NOTE: should be in form of [x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR]
 	raw_xs, raw_ys, bot_ys, centers, distsL, distsR = processed_perception_data
 
+	if clip_lims == None:
+		idx1 = len(raw_ys)
+		idx2 = len(bot_ys)
+	else:
+		idx1 = np.where(raw_ys>5)
+		idx2 = np.where(bot_ys>5)
+		idx1 = idx1[0][0]
+		idx2 = idx2[0][0]
+		
+
 	# ------------ raw lidar readings ----------------
-	# print len(raw_ys), len(raw_xs)
-	lidar_plot = [raw_ys-raw_ys[0], raw_xs]
+	lidar_plot = [raw_ys[:idx1]-raw_ys[0], raw_xs[:idx1]]
 	# ------------ estimated robot center ----------------
-	estCents = [bot_ys-raw_ys[0], (-1)*centers[0:]]
+	estCents = [bot_ys[:idx2]-raw_ys[0], (-1)*centers[:idx2] ]
 	# ------------ lateral distance left ----------------
-	dLs = [bot_ys-raw_ys[0], distsL[0:]]
+	dLs = [bot_ys[:idx2]-raw_ys[0], distsL[:idx2]]
 	# ------------ lateral distance right ----------------
-	dRs = [bot_ys-raw_ys[0], (-1)*distsR[0:]]
+	dRs = [bot_ys[:idx2]-raw_ys[0], (-1)*distsR[:idx2]]
 
 	return lidar_plot,estCents,dLs,dRs, labels
 

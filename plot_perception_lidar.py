@@ -83,16 +83,16 @@ subFigs4 = []
 for i in range(0,len(plotData)):
 	tmpColor = (r(),r(),r())
 
-	tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], visible=False, marker='.',linestyle='None', label=plotData[i][4][0])
+	tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], visible=False, marker='.',linestyle='None', label=plotData[i][5])
 	subFigs1.append(tmpFig)
 
-	tmpFig2, = ax2.plot(plotData[i][1][0], plotData[i][1][1], visible=False, marker="4",linestyle='-', label=plotData[i][4][1])
+	tmpFig2, = ax2.plot(plotData[i][1][0], plotData[i][1][1], visible=False, marker="4",linestyle='-', label=plotData[i][5])
 	subFigs2.append(tmpFig2)
 
-	tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], color=tmpColor, visible=False, marker='_', label=plotData[i][4][2])
+	tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], color=tmpColor, visible=False, marker='_', label=plotData[i][5])
 	subFigs3.append(tmpFig3)
 
-	tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], color=tmpColor, visible=False, marker='_', label=plotData[i][4][3])
+	tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], color=tmpColor, visible=False, marker='_', label=plotData[i][5])
 	subFigs4.append(tmpFig4)
 
 
