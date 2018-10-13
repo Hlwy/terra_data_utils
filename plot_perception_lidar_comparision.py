@@ -31,13 +31,23 @@ def setup_plot_data(collections):
 	legendName = None
 	for collect in collections:
 		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'])
-		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, True)
 
 		if fnmatch.fnmatch(str(collect['name']), '*sim*'):
 			legendName = "Simulated Field Data"
+
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [5.3])
+
 			tmpData = [lids,cents,dLs,dRs, lbls, legendName, 'sim', str(collect['name'])]
 		else:
 			legendName = "Real Field Data"
+
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [40.4, 44.5]) # Sorghum Run 1
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [30.26, 34.5]) # Sorghum Run 2
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [4.5]) # Sorghum Run 3
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [5.3])
+
 			tmpData = [lids,cents,dLs,dRs, lbls, legendName, 'real', str(collect['name'])]
 
 		figDs.append(tmpData)
@@ -73,17 +83,17 @@ for i in range(0,len(plotData)):
 		# tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], 'g.', label="Raw Lidar Measurements (Real)")
 		# tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], color='lime', linestyle='-', label="Extracted L/R Distances (Real)")
 		# tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], color='lime', linestyle='-')
-		plt.plot(plotData[i][0][0], plotData[i][0][1], 'g.', label="Raw Lidar Measurements (Real)")
-		plt.plot(plotData[i][2][0], plotData[i][2][1], color='yellow', linestyle='-', linewidth=3.0, label="Extracted L/R Distances (Real)")
-		plt.plot(plotData[i][3][0], plotData[i][3][1], color='yellow', linestyle='-', linewidth=3.0)
+		plt.plot(plotData[i][0][0], plotData[i][0][1], 'g.', zorder=0, label="Raw Lidar Measurements (Real)")
+		plt.plot(plotData[i][2][0], plotData[i][2][1], color='yellow', linestyle='-', linewidth=3.0, zorder=2, label="Extracted L/R Distances (Real)")
+		plt.plot(plotData[i][3][0], plotData[i][3][1], color='yellow', linestyle='-', linewidth=3.0, zorder=2)
 	elif plotData[i][6] == 'sim':
 		print "Simulated Data"
 		# tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], 'b.', label="Raw Lidar Measurements (Simulated)")
 		# tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], 'c-', label="Extracted L/R Distances (Simulated)")
 		# tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], 'c-')
-		plt.plot(plotData[i][0][0], plotData[i][0][1], 'b.', label="Raw Lidar Measurements (Simulated)")
-		plt.plot(plotData[i][2][0], plotData[i][2][1], 'm-', linewidth=3.0, label="Extracted L/R Distances (Simulated)")
-		plt.plot(plotData[i][3][0], plotData[i][3][1], 'm-', linewidth=3.0)
+		plt.plot(plotData[i][0][0], plotData[i][0][1], 'b.', zorder=1, label="Raw Lidar Measurements (Simulated)")
+		plt.plot(plotData[i][2][0], plotData[i][2][1], 'm-', linewidth=3.0, zorder=3, label="Extracted L/R Distances (Simulated)")
+		plt.plot(plotData[i][3][0], plotData[i][3][1], 'm-', linewidth=3.0, zorder=3)
 
 
 plt.axis('equal')

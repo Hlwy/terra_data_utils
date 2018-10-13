@@ -28,24 +28,25 @@ def collect_experiments():
 
 def setup_plot_data(collections):
 	figDs = []
+	legendName = None
 	for collect in collections:
-		if fnmatch.fnmatch(str(collect['name']), '*real*'):
-			print("Real")
-			spd_gain = -1
-		elif fnmatch.fnmatch(str(collect['name']), '*simrun2*'):
-			print("Simulated Run 2")
-			spd_gain = -1.9
-		elif fnmatch.fnmatch(str(collect['name']), '*sim*'):
-			print("Simulated")
-			spd_gain = -1.75
-			spd_gain = -1.5
-		else:
-			spd_gain = -1.15
-
 		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'])
-		# print tmpOut
-		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut)
-		tmpData = [lids,cents,dLs,dRs, lbls, str(collect['name'])]
+
+		if fnmatch.fnmatch(str(collect['name']), '*sim*'):
+			legendName = "Simulated Field Data"
+
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
+
+			tmpData = [lids,cents,dLs,dRs, lbls, legendName, 'sim', str(collect['name'])]
+		else:
+			legendName = "Real Field Data"
+
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, 1)
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, 2)
+
+			tmpData = [lids,cents,dLs,dRs, lbls, legendName, 'real', str(collect['name'])]
+
 		figDs.append(tmpData)
 
 	return figDs, len(figDs)
@@ -67,12 +68,12 @@ dCollects,dirNames = collect_experiments()
 plotData, nPlots = setup_plot_data(dCollects)
 
 # Retrieve all collected data collection folder names for displaying each check box in graph
-names = [cName for _,_,_,_,_,cName in plotData]
+names = [cName for _,_,_,_,_,_,_,cName in plotData]
 chkBoxFlags = tuple([False for i in range(0,nPlots)])
 rax = plt.axes([0.05, 0.4, 0.1, 0.15])
 check = CheckButtons(rax, tuple(names), chkBoxFlags)
 
-print plotData[0][4]
+# print plotData[0][4]
 
 r = lambda: random.uniform(0,1)
 
@@ -82,17 +83,18 @@ subFigs3 = []
 subFigs4 = []
 for i in range(0,len(plotData)):
 	tmpColor = (r(),r(),r())
-
-	tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], visible=False, marker='.',linestyle='None', label=plotData[i][5])
-	subFigs1.append(tmpFig)
+	if plotData[i][6] is 'real':
+		tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], zorder=0, visible=False, marker='.',linestyle='None', label=plotData[i][5])
+	else:
+		tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], visible=False, marker='.',linestyle='None', label=plotData[i][5])
 
 	tmpFig2, = ax2.plot(plotData[i][1][0], plotData[i][1][1], visible=False, marker="4",linestyle='-', label=plotData[i][5])
-	subFigs2.append(tmpFig2)
-
 	tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], color=tmpColor, visible=False, marker='_', label=plotData[i][5])
-	subFigs3.append(tmpFig3)
-
 	tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], color=tmpColor, visible=False, marker='_', label=plotData[i][5])
+
+	subFigs1.append(tmpFig)
+	subFigs2.append(tmpFig2)
+	subFigs3.append(tmpFig3)
 	subFigs4.append(tmpFig4)
 
 

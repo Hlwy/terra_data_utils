@@ -251,24 +251,55 @@ def prepare_plot_data(processed_perception_data, clip_lims=None):
 	# NOTE: should be in form of [x_raw, y_raw, y_bot, estimatedCenters, distsL,distsR]
 	raw_xs, raw_ys, bot_ys, centers, distsL, distsR = processed_perception_data
 
+	y0 = raw_ys[0]
+	# print y0
+	# print clip_lims, len(clip_lims)
+
 	if clip_lims == None:
-		idx1 = len(raw_ys)
-		idx2 = len(bot_ys)
-	else:
-		idx1 = np.where(raw_ys>5)
-		idx2 = np.where(bot_ys>5)
-		idx1 = idx1[0][0]
-		idx2 = idx2[0][0]
-		
+		idx10 = 0
+		idx11 = len(raw_ys)
+		idx20 = 0
+		idx21 = len(bot_ys)
+	elif len(clip_lims) is 1:
+		# ymax = 5 + y0
+		# ymax = 4.5 + y0 # For real Sorghum experiment results [Run 3]
+		# ymax = 5.4 + y0 # For Simulated Sorghum experiment results [Run 1]
+		ymax = clip_lims[0] + y0
+
+		idx11 = np.where(raw_ys>ymax)
+		idx21 = np.where(bot_ys>ymax)
+
+		idx10 = 0
+		idx20 = 0
+
+		idx11 = idx11[0][0]
+		idx21 = idx21[0][0]
+	elif len(clip_lims) is 2:
+		# ymin = 40.4 + y0; ymax = 44.5 + y0 # Sorghum Run 1
+		# ymin = 30.26 + y0; ymax = 34.5 + y0 # Sorghum Run 2
+		ymin = clip_lims[0] + y0; ymax = clip_lims[1] + y0
+		print y0, ymin, ymax
+
+		idx1 = np.where( (raw_ys>=ymin) & (raw_ys<=ymax) )
+		idx2 = np.where( (bot_ys>=ymin) & (bot_ys<=ymax) )
+
+		idx10 = idx1[0][0]
+		idx11 = idx1[0][-1]
+
+		idx20 = idx2[0][0]
+		idx21 = idx2[0][-1]
+
+		# print raw_ys[idx10], raw_ys[idx11]
+		# , idx2[0][0], idx2[0][-1]
 
 	# ------------ raw lidar readings ----------------
-	lidar_plot = [raw_ys[:idx1]-raw_ys[0], raw_xs[:idx1]]
+	lidar_plot = [raw_ys[idx10:idx11]-raw_ys[idx10], raw_xs[idx10:idx11]]
 	# ------------ estimated robot center ----------------
-	estCents = [bot_ys[:idx2]-raw_ys[0], (-1)*centers[:idx2] ]
+	estCents = [bot_ys[idx20:idx21]-raw_ys[idx10], (-1)*centers[idx20:idx21] ]
 	# ------------ lateral distance left ----------------
-	dLs = [bot_ys[:idx2]-raw_ys[0], distsL[:idx2]]
+	dLs = [bot_ys[idx20:idx21]-raw_ys[idx10], distsL[idx20:idx21]]
 	# ------------ lateral distance right ----------------
-	dRs = [bot_ys[:idx2]-raw_ys[0], (-1)*distsR[:idx2]]
+	dRs = [bot_ys[idx20:idx21]-raw_ys[idx10], (-1)*distsR[idx20:idx21]]
 
 	return lidar_plot,estCents,dLs,dRs, labels
 
