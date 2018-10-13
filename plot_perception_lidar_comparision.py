@@ -32,6 +32,7 @@ def setup_plot_data(collections):
 	for collect in collections:
 		tmpOut = process_lidar_logs(collect['lidar_log'], collect['perception_lidar'], collect['system_log'])
 		lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, True)
+		# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
 
 		if fnmatch.fnmatch(str(collect['name']), '*sim*'):
 			legendName = "Simulated Field Data"
@@ -73,17 +74,17 @@ for i in range(0,len(plotData)):
 		# tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], 'g.', label="Raw Lidar Measurements (Real)")
 		# tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], color='lime', linestyle='-', label="Extracted L/R Distances (Real)")
 		# tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], color='lime', linestyle='-')
-		plt.plot(plotData[i][0][0], plotData[i][0][1], 'g.', label="Raw Lidar Measurements (Real)")
-		plt.plot(plotData[i][2][0], plotData[i][2][1], color='yellow', linestyle='-', linewidth=3.0, label="Extracted L/R Distances (Real)")
-		plt.plot(plotData[i][3][0], plotData[i][3][1], color='yellow', linestyle='-', linewidth=3.0)
+		plt.plot(plotData[i][0][0], plotData[i][0][1], color='darkgreen', linestyle='None', marker='.', label="Raw Lidar Measurements (Real)")
+		plt.plot(plotData[i][2][0], plotData[i][2][1], color='lime', linestyle='-', linewidth=3.0, label="Extracted L/R Distances (Real)")
+		plt.plot(plotData[i][3][0], plotData[i][3][1], color='lime', linestyle='-', linewidth=3.0)
 	elif plotData[i][6] == 'sim':
 		print "Simulated Data"
 		# tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], 'b.', label="Raw Lidar Measurements (Simulated)")
 		# tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], 'c-', label="Extracted L/R Distances (Simulated)")
 		# tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], 'c-')
 		plt.plot(plotData[i][0][0], plotData[i][0][1], 'b.', label="Raw Lidar Measurements (Simulated)")
-		plt.plot(plotData[i][2][0], plotData[i][2][1], 'm-', linewidth=3.0, label="Extracted L/R Distances (Simulated)")
-		plt.plot(plotData[i][3][0], plotData[i][3][1], 'm-', linewidth=3.0)
+		plt.plot(plotData[i][2][0], plotData[i][2][1], 'c-', linewidth=3.0, label="Extracted L/R Distances (Simulated)")
+		plt.plot(plotData[i][3][0], plotData[i][3][1], 'c-', linewidth=3.0)
 
 
 plt.axis('equal')
