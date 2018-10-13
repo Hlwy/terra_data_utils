@@ -36,9 +36,20 @@ def setup_plot_data(collections):
 
 		if fnmatch.fnmatch(str(collect['name']), '*sim*'):
 			legendName = "Simulated Field Data"
+
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [5.3])
+
 			tmpData = [lids,cents,dLs,dRs, lbls, legendName, 'sim', str(collect['name'])]
 		else:
 			legendName = "Real Field Data"
+
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, None)
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [40.4, 44.5]) # Sorghum Run 1
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [30.26, 34.5]) # Sorghum Run 2
+			# lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [4.5]) # Sorghum Run 3
+			lids,cents,dLs,dRs, lbls = prepare_plot_data(tmpOut, [5.3])
+
 			tmpData = [lids,cents,dLs,dRs, lbls, legendName, 'real', str(collect['name'])]
 
 		figDs.append(tmpData)
@@ -49,42 +60,24 @@ def setup_plot_data(collections):
 """ ================================
 			Mulitple Plots
 ===================================== """
-# fig, ax = plt.subplots()
-
-# gridsize = (4, 2)
-# fig = plt.figure(figsize=(12, 8))
-# ax1 = plt.subplot2grid(gridsize, (0, 0), colspan=2, rowspan=2)
-# # ax2 = plt.subplot2grid(gridsize, (0, 1), colspan=1, rowspan=2)
-# ax3 = plt.subplot2grid(gridsize, (2, 0), colspan=1, rowspan=2)
-# ax4 = plt.subplot2grid(gridsize, (2, 1), colspan=1, rowspan=2)
 
 dCollects,dirNames = collect_experiments()
 plotData, nPlots = setup_plot_data(dCollects)
 
 # Retrieve all collected data collection folder names for displaying each check box in graph
-subFigs1 = []
-subFigs2 = []
-subFigs3 = []
-subFigs4 = []
 plt.figure(1)
 for i in range(0,len(plotData)):
 
 	if plotData[i][6] == 'real':
 		print "Real Data"
-		# tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], 'g.', label="Raw Lidar Measurements (Real)")
-		# tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], color='lime', linestyle='-', label="Extracted L/R Distances (Real)")
-		# tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], color='lime', linestyle='-')
-		plt.plot(plotData[i][0][0], plotData[i][0][1], color='darkgreen', linestyle='None', marker='.', label="Raw Lidar Measurements (Real)")
-		plt.plot(plotData[i][2][0], plotData[i][2][1], color='lime', linestyle='-', linewidth=3.0, label="Extracted L/R Distances (Real)")
-		plt.plot(plotData[i][3][0], plotData[i][3][1], color='lime', linestyle='-', linewidth=3.0)
+		plt.plot(plotData[i][0][0], plotData[i][0][1], color='darkgreen', linestyle='None', marker='.', zorder=0, label="Raw Lidar Measurements (Real)")
+		plt.plot(plotData[i][2][0], plotData[i][2][1], color='lime', linestyle='-', linewidth=3.0, zorder=2, label="Extracted L/R Distances (Real)")
+		plt.plot(plotData[i][3][0], plotData[i][3][1], color='lime', linestyle='-', linewidth=3.0, zorder=2)
 	elif plotData[i][6] == 'sim':
 		print "Simulated Data"
-		# tmpFig, = ax1.plot(plotData[i][0][0], plotData[i][0][1], 'b.', label="Raw Lidar Measurements (Simulated)")
-		# tmpFig3, = ax1.plot(plotData[i][2][0], plotData[i][2][1], 'c-', label="Extracted L/R Distances (Simulated)")
-		# tmpFig4, = ax1.plot(plotData[i][3][0], plotData[i][3][1], 'c-')
-		plt.plot(plotData[i][0][0], plotData[i][0][1], 'b.', label="Raw Lidar Measurements (Simulated)")
-		plt.plot(plotData[i][2][0], plotData[i][2][1], 'c-', linewidth=3.0, label="Extracted L/R Distances (Simulated)")
-		plt.plot(plotData[i][3][0], plotData[i][3][1], 'c-', linewidth=3.0)
+		plt.plot(plotData[i][0][0], plotData[i][0][1], color='b', linestyle='None', marker='.', zorder=1, label="Raw Lidar Measurements (Simulated)")
+		plt.plot(plotData[i][2][0], plotData[i][2][1], color='c', linestyle='-', linewidth=3.0, zorder=3, label="Extracted L/R Distances (Simulated)")
+		plt.plot(plotData[i][3][0], plotData[i][3][1], color='c', linestyle='-', linewidth=3.0, zorder=3)
 
 
 plt.axis('equal')
