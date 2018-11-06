@@ -272,8 +272,18 @@ def prepare_plot_data(processed_perception_data, clip_lims=None):
 		idx10 = 0
 		idx20 = 0
 
-		idx11 = idx11[0][0]
-		idx21 = idx21[0][0]
+		if not idx11:
+			print idx11
+			idx11 = idx11[0][0]
+		else:
+			idx11 = -1
+
+		if not idx21:
+			idx21 = idx21[0][0]
+		else:
+			idx21 = -1
+
+		print idx11, idx21
 	elif len(clip_lims) is 2:
 		# ymin = 40.4 + y0; ymax = 44.5 + y0 # Sorghum Run 1
 		# ymin = 30.26 + y0; ymax = 34.5 + y0 # Sorghum Run 2
